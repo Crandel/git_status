@@ -1,0 +1,9 @@
+[package]
+name = "git_status"
+version = "0.1.0"
+authors = ["Crandel <cradlemann@gmail.com>"]
+
+license-file = "LICENSE"
+
+[dependencies]
+regex = "1.0.2"
