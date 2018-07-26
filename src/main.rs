@@ -1,6 +1,7 @@
 extern crate regex;
 
 use regex::Regex;
+use std::env::args;
 use std::process::Command;
 use std::str;
 use std::string::String;
@@ -12,7 +13,11 @@ fn main() {
         .output()
         .expect("failed to execute process");
     let status = str::from_utf8(&status_vec.stdout).unwrap();
-
+    let shell_vec: Vec<String> = args().collect();
+    if shell_vec.len() == 1 {
+        panic!("Please tell me a shell as arg")
+    }
+    let shell: &str = &shell_vec[1];
     if status.len() > 0 {
         let mut modified_unstaged = 0;
         let mut deleted_unstaged = 0;
@@ -85,8 +90,8 @@ fn main() {
         }
 
         let mut branch_final = String::from(branch);
-        let mut staged_counts = String::from("|");
-        let mut unstaged_counts = String::from("|");
+        let mut staged_counts = String::from("");
+        let mut unstaged_counts = String::from("");
         if modified_unstaged > 0 {
             unstaged_counts.push_str(&format!("%{}", modified_unstaged))
         }
@@ -109,9 +114,40 @@ fn main() {
         if new_staged > 0 {
             staged_counts.push_str(&format!("+{}", new_staged))
         }
-        println!("{}", staged_counts);
-        println!("{}", unstaged_counts);
 
+        match shell {
+            "zsh" => {
+                branch_final = format!("%F{{cyan}}{}%f", branch_final);
+                if ahead_count.len() > 0 {
+                    branch_final = format!("{}%F{{green}}{{>{}}}%f", branch_final, ahead_count);
+                }
+                if behind_count.len() > 0 {
+                    branch_final = format!("{}%F{{red}}{{<{}}}%f", branch_final, behind_count);
+                }
+                if unstaged_counts.len() > 0 {
+                    branch_final = format!("{}|%F{{yellow}}{}%f", branch_final, unstaged_counts)
+                }
+                if staged_counts.len() > 0 {
+                    branch_final = format!("{}|%F{{green}}{}%f", branch_final, staged_counts)
+                }
+            }
+            "bash" => {
+                branch_final = format!("${{CYAN}}{}", branch_final);
+                if ahead_count.len() > 0 {
+                    branch_final = format!("{}${{LIGHT_GREEN}}{{>{}}}", branch_final, ahead_count);
+                }
+                if behind_count.len() > 0 {
+                    branch_final = format!("{}${{LIGHT_RED}}{{<{}}}", branch_final, behind_count);
+                }
+                if unstaged_counts.len() > 0 {
+                    branch_final = format!("{}|${{YELLOW}}{}", branch_final, unstaged_counts)
+                }
+                if staged_counts.len() > 0 {
+                    branch_final = format!("{}|${{GREEN}}{}", branch_final, staged_counts)
+                }
+            }
+            _ => {}
+        }
         println!("{}", branch_final);
     }
 }
