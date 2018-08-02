@@ -86,7 +86,7 @@ fn main() {
         };
 
         // get branch
-        let branch_vec = &repository_diff[3..repository_diff.len() - 1]
+        let branch_vec = &repository_diff[3..repository_diff.len()]
             .split('.')
             .collect::<Vec<&str>>();
         let branch = match branch_vec.get(0) {
