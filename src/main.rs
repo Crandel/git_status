@@ -34,7 +34,7 @@ fn main() {
         };
         let number = Regex::new("[0-9+]").unwrap();
         let ahead = Regex::new("ahead [0-9]+*").unwrap();
-        let branch_full_rex = Regex::new(r"## \w+").unwrap();
+        let branch_full_rex = Regex::new(r"## .+").unwrap();
         let branch_rex = Regex::new(r"\w+").unwrap();
         // get ahead count
         let ahead_str = match ahead.find(repository_diff) {
@@ -93,7 +93,7 @@ fn main() {
         let mut staged_counts = String::from("");
         let mut unstaged_counts = String::from("");
         if modified_unstaged > 0 {
-            unstaged_counts.push_str(&format!("%{}", modified_unstaged))
+            unstaged_counts.push_str(&format!("%%{}", modified_unstaged))
         }
         if deleted_unstaged > 0 {
             unstaged_counts.push_str(&format!("-{}", deleted_unstaged))
@@ -103,7 +103,7 @@ fn main() {
         }
 
         if modified_staged > 0 {
-            staged_counts.push_str(&format!("%{}", modified_staged))
+            staged_counts.push_str(&format!("%%{}", modified_staged))
         }
         if deleted_staged > 0 {
             staged_counts.push_str(&format!("-{}", deleted_staged))
