@@ -101,12 +101,14 @@ fn main() {
                 let unstaged_ch = current_str[1];
                 match unstaged_ch {
                     'M' => modified_unstaged += 1,
+                    'm' => modified_unstaged += 1,
                     'D' => deleted_unstaged += 1,
                     '?' => untracked_unstaged += 1,
                     _ => (),
                 };
                 match staged_ch {
                     'M' => modified_staged += 1,
+                    'm' => modified_staged += 1,
                     'D' => deleted_staged += 1,
                     'R' => renamed_staged += 1,
                     'A' => new_staged += 1,
