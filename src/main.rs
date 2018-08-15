@@ -103,6 +103,7 @@ fn main() {
                     'M' => modified_unstaged += 1,
                     'm' => modified_unstaged += 1,
                     'D' => deleted_unstaged += 1,
+                    'd' => deleted_unstaged += 1,
                     '?' => untracked_unstaged += 1,
                     _ => (),
                 };
@@ -110,8 +111,11 @@ fn main() {
                     'M' => modified_staged += 1,
                     'm' => modified_staged += 1,
                     'D' => deleted_staged += 1,
+                    'd' => deleted_staged += 1,
                     'R' => renamed_staged += 1,
+                    'r' => renamed_staged += 1,
                     'A' => new_staged += 1,
+                    'a' => new_staged += 1,
                     _ => (),
                 };
             }
