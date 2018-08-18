@@ -213,7 +213,7 @@ fn main() {
                     ).expect("Error");
                 }
                 if staged_counts.len() > 0 {
-                    let (staged_start, staged_end) = parser.get(&Repo::Unstaged).unwrap();
+                    let (staged_start, staged_end) = parser.get(&Repo::Staged).unwrap();
 
                     write(
                         &mut branch_final,
