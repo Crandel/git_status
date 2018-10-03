@@ -5,5 +5,9 @@ authors = ["Crandel <cradlemann@gmail.com>"]
 
 license-file = "LICENSE"
 
+[lib]
+name = "git_status"
+path = "src/lib.rs"
+
 [dependencies]
-regex = "1.0.2"
+regex = "1.0.5"
