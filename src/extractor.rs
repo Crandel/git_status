@@ -68,8 +68,9 @@ impl Extractor {
         };
         extractor.behind = String::from(behind);
 
-        // get branch
-        let branch_vec = &input[3..input.len()].split('.').collect::<Vec<&str>>();
+        // ## rrr-43...origin/rrr-43 [ahead 1][behind 3]
+        // we should ignore first 3 symbols and split by "..." to get the branch
+        let branch_vec = &input[3..input.len()].split("...").collect::<Vec<&str>>();
         let branch = match branch_vec.get(0) {
             Some(local_name) => local_name,
             _ => "",
