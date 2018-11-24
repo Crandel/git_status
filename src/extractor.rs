@@ -31,7 +31,7 @@ impl Extractor {
             new_staged: 0,
         };
 
-        let number = Regex::new("[0-9+]").unwrap();
+        let number = Regex::new("[0-9]+").unwrap();
         let ahead_reg = Regex::new("ahead [0-9]+*").unwrap();
         let behind = Regex::new("behind [0-9]+*").unwrap();
 
