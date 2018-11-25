@@ -9,24 +9,24 @@ impl BashFormatter {
     pub fn new() -> BashFormatter {
         let shell = ShellFormatter {
             branch: Wrapper {
-                start: String::from("${CYAN}"),
-                end: String::from("${NORMAL}"),
+                start: String::from("\\[\\033[1;36m\\]"),
+                end: String::from("\\[\\e[0m\\]"),
             },
             ahead: Wrapper {
-                start: String::from("${LIGHT_GREEN}{>"),
-                end: String::from("}${NORMAL}"),
+                start: String::from("\\[\\033[1;32m\\]{>"),
+                end: String::from("}\\[\\e[0m\\]"),
             },
             behind: Wrapper {
-                start: String::from("${LIGHT_RED}{<"),
-                end: String::from("}${NORMAL}"),
+                start: String::from("\\[\\033[1;31m\\]{<"),
+                end: String::from("}\\[\\e[0m\\]"),
             },
             unstaged: Wrapper {
-                start: String::from("|${YELLOW}"),
-                end: String::from("${NORMAL}"),
+                start: String::from("\\[\\033[1;33m\\]"),
+                end: String::from("\\[\\e[0m\\]"),
             },
             staged: Wrapper {
-                start: String::from("|${GREEN}"),
-                end: String::from("${NORMAL}"),
+                start: String::from("|\\[\\033[0;32m\\]"),
+                end: String::from("\\[\\e[0m\\]"),
             },
             modified_char: String::from("%"),
             deleted_char: String::from("-"),
