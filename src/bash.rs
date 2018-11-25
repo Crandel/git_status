@@ -9,7 +9,7 @@ impl BashFormatter {
     pub fn new() -> BashFormatter {
         let shell = ShellFormatter {
             branch: Wrapper {
-                start: String::from("\\[\\033[1;36m\\]"),
+                start: String::from(""),
                 end: String::from("\\[\\e[0m\\]"),
             },
             ahead: Wrapper {
@@ -21,7 +21,7 @@ impl BashFormatter {
                 end: String::from("}\\[\\e[0m\\]"),
             },
             unstaged: Wrapper {
-                start: String::from("\\[\\033[1;33m\\]"),
+                start: String::from("|\\[\\033[1;33m\\]"),
                 end: String::from("\\[\\e[0m\\]"),
             },
             staged: Wrapper {
