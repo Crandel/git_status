@@ -1,4 +1,4 @@
-use extractor::Extractor;
+use crate::extractor::Extractor;
 use std::fmt::write;
 
 #[derive(Debug, PartialEq, Eq, Hash)]

@@ -1,5 +1,5 @@
-use common::{OutputFormatter, ShellFormatter, Wrapper};
-use extractor::Extractor;
+use crate::common::{OutputFormatter, ShellFormatter, Wrapper};
+use crate::extractor::Extractor;
 
 pub struct ZshFormatter {
     pub shell: ShellFormatter,

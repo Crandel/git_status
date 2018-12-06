@@ -2,6 +2,7 @@
 name = "git_status"
 version = "0.1.0"
 authors = ["Crandel <cradlemann@gmail.com>"]
+edition = "2018"
 
 license-file = "LICENSE"
 
