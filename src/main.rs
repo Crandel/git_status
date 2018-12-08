@@ -22,7 +22,7 @@ fn main() {
         panic!("Please tell me a shell name as arg")
     }
     let shell: &str = &shell_vec[1];
-    if status.len() > 0 {
+    if !status.is_empty() {
         /*
         git status -sb return all changes in repository
 
@@ -37,8 +37,8 @@ fn main() {
         let bash_formatter = BashFormatter::new();
         let zsh_formatter = ZshFormatter::new();
         let branch_final = match shell {
-            "bash" => bash_formatter.get_output(extractor),
-            "zsh" => zsh_formatter.get_output(extractor),
+            "bash" => bash_formatter.get_output(&extractor),
+            "zsh" => zsh_formatter.get_output(&extractor),
             _ => String::from(""),
         };
         println!("{}", branch_final);

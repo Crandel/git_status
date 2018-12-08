@@ -34,12 +34,18 @@ impl BashFormatter {
             renamed_char: String::from("^"),
             new_char: String::from("+"),
         };
-        BashFormatter { shell: shell }
+        BashFormatter { shell }
+    }
+}
+
+impl Default for BashFormatter {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
 impl OutputFormatter for BashFormatter {
-    fn get_output(&self, extractor: Extractor) -> String {
+    fn get_output(&self, extractor: &Extractor) -> String {
         self.shell.format_output(extractor)
     }
 }

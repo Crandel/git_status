@@ -21,18 +21,18 @@ pub struct ShellFormatter {
 }
 
 impl ShellFormatter {
-    pub fn format_output(&self, extractor: Extractor) -> String {
+    pub fn format_output(&self, extractor: &Extractor) -> String {
         let mut branch_final = String::from("");
         let unstaged_counts = extractor.get_unstaged(
-            self.modified_char.clone(),
-            self.deleted_char.clone(),
-            self.untracked_char.clone(),
+            &self.modified_char,
+            &self.deleted_char,
+            &self.untracked_char,
         );
         let staged_counts = extractor.get_staged(
-            self.modified_char.clone(),
-            self.deleted_char.clone(),
-            self.renamed_char.clone(),
-            self.new_char.clone(),
+            &self.modified_char,
+            &self.deleted_char,
+            &self.renamed_char,
+            &self.new_char,
         );
 
         write(
@@ -43,8 +43,9 @@ impl ShellFormatter {
                 extractor.branch.to_owned(),
                 self.branch.end.to_owned()
             ),
-        ).expect("Error");
-        if extractor.ahead.len() > 0 {
+        )
+        .expect("Error");
+        if !extractor.ahead.is_empty() {
             write(
                 &mut branch_final,
                 format_args!(
@@ -53,9 +54,10 @@ impl ShellFormatter {
                     extractor.ahead,
                     self.ahead.end.to_owned()
                 ),
-            ).expect("Error");
+            )
+            .expect("Error");
         }
-        if extractor.behind.len() > 0 {
+        if !extractor.behind.is_empty() {
             write(
                 &mut branch_final,
                 format_args!(
@@ -64,9 +66,10 @@ impl ShellFormatter {
                     extractor.behind,
                     self.behind.end.to_owned()
                 ),
-            ).expect("Error");
+            )
+            .expect("Error");
         }
-        if unstaged_counts.len() > 0 {
+        if !unstaged_counts.is_empty() {
             write(
                 &mut branch_final,
                 format_args!(
@@ -75,9 +78,10 @@ impl ShellFormatter {
                     unstaged_counts.to_owned(),
                     self.unstaged.end.to_owned()
                 ),
-            ).expect("Error");
+            )
+            .expect("Error");
         }
-        if staged_counts.len() > 0 {
+        if !staged_counts.is_empty() {
             write(
                 &mut branch_final,
                 format_args!(
@@ -86,12 +90,13 @@ impl ShellFormatter {
                     staged_counts.to_owned(),
                     self.staged.end.to_owned()
                 ),
-            ).expect("Error");
+            )
+            .expect("Error");
         }
         branch_final
     }
 }
 
 pub trait OutputFormatter {
-    fn get_output(&self, extractor: Extractor) -> String;
+    fn get_output(&self, extractor: &Extractor) -> String;
 }

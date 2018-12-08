@@ -35,7 +35,7 @@ impl Extractor {
         let ahead_reg = Regex::new("ahead [0-9]+*").unwrap();
         let behind = Regex::new("behind [0-9]+*").unwrap();
 
-        let vec_strings = status.split("\n").collect::<Vec<&str>>();
+        let vec_strings = status.split('\n').collect::<Vec<&str>>();
         // First line give us a repo name and relation to remote server
         let input = match vec_strings.get(0) {
             Some(valid_str) => valid_str,
@@ -77,8 +77,8 @@ impl Extractor {
         };
         extractor.branch = String::from(branch);
 
-        for i in 1..vec_strings.len() {
-            let current_str = vec_strings[i].chars().collect::<Vec<char>>();
+        for item in vec_strings.iter().skip(1) {
+            let current_str = item.chars().collect::<Vec<char>>();
             if current_str.len() > 2 {
                 let staged_ch = current_str[0];
                 let unstaged_ch = current_str[1];
@@ -106,7 +106,7 @@ impl Extractor {
         extractor
     }
 
-    pub fn get_unstaged(&self, modified: String, deleted: String, untracked: String) -> String {
+    pub fn get_unstaged(&self, modified: &str, deleted: &str, untracked: &str) -> String {
         let mut unstaged_counts = String::from("");
 
         if self.modified_unstaged > 0 {
@@ -121,13 +121,7 @@ impl Extractor {
         unstaged_counts
     }
 
-    pub fn get_staged(
-        &self,
-        modified: String,
-        deleted: String,
-        renamed: String,
-        new: String,
-    ) -> String {
+    pub fn get_staged(&self, modified: &str, deleted: &str, renamed: &str, new: &str) -> String {
         let mut staged_counts = String::from("");
 
         if self.modified_staged > 0 {

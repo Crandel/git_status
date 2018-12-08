@@ -34,12 +34,18 @@ impl ZshFormatter {
             renamed_char: String::from("^"),
             new_char: String::from("+"),
         };
-        ZshFormatter { shell: shell }
+        ZshFormatter { shell }
+    }
+}
+
+impl Default for ZshFormatter {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
 impl OutputFormatter for ZshFormatter {
-    fn get_output(&self, extractor: Extractor) -> String {
+    fn get_output(&self, extractor: &Extractor) -> String {
         self.shell.format_output(extractor)
     }
 }
