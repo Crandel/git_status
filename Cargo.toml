@@ -11,4 +11,4 @@ name = "git_status"
 path = "src/lib.rs"
 
 [dependencies]
-regex = "1.0.5"
+regex = "1.2.1"
