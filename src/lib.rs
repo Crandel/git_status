@@ -1,5 +1,3 @@
-extern crate regex;
-
 pub mod bash;
 pub mod common;
 pub mod extractor;

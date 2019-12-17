@@ -1,5 +1,3 @@
-extern crate git_status;
-
 use std::env::args;
 use std::process::Command;
 use std::str;
