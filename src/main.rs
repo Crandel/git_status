@@ -19,10 +19,6 @@ fn main() {
         .arg("-sb")
         .output()
         .expect("Failed to execute process, git missing");
-    let status = str::from_utf8(&status_vec.stdout).unwrap();
-    if status.is_empty() {
-        return;
-    }
     /*
     git status -sb return all changes in repository
 
@@ -33,6 +29,10 @@ fn main() {
 
     Using this output we could calculate changes and create repository status output for shell.
     */
+    let status = str::from_utf8(&status_vec.stdout).unwrap();
+    if status.is_empty() {
+        return;
+    }
     let extractor = Extractor::new(status);
     let bash_formatter = BashFormatter::new();
     let zsh_formatter = ZshFormatter::new();
