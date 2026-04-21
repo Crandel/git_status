@@ -1,3 +1,4 @@
+pub mod ansi;
 pub mod bash;
 pub mod common;
 pub mod extractor;

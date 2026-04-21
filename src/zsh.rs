@@ -25,7 +25,7 @@ impl ZshFormatter {
                 end: String::from("%f"),
             },
             staged: Wrapper {
-                start: String::from("|%F{green}"),
+                start: String::from("|%F{teal}"),
                 end: String::from("%f"),
             },
             modified_char: String::from("%%"),
