@@ -1,8 +1,6 @@
 use std::env::args;
 use std::process::Command;
 use std::str;
-use std::string::String;
-
 use git_status::bash::BashFormatter;
 use git_status::common::OutputFormatter;
 use git_status::extractor::Extractor;

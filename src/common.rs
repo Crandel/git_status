@@ -1,5 +1,5 @@
 use crate::extractor::Extractor;
-use std::fmt::write;
+use std::fmt::Write;
 
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub struct Wrapper {
@@ -22,7 +22,7 @@ pub struct ShellFormatter {
 
 impl ShellFormatter {
     pub fn format_output(&self, extractor: &Extractor) -> String {
-        let mut branch_final = String::from("");
+        let mut out = String::new();
         let unstaged_counts = extractor.get_unstaged(
             &self.modified_char,
             &self.deleted_char,
@@ -35,65 +35,25 @@ impl ShellFormatter {
             &self.new_char,
         );
 
-        write(
-            &mut branch_final,
-            format_args!(
-                "{}{}{}",
-                self.branch.start.to_owned(),
-                extractor.branch.to_owned(),
-                self.branch.end.to_owned()
-            ),
-        )
-        .expect("Error");
-        if !extractor.ahead.is_empty() {
-            write(
-                &mut branch_final,
-                format_args!(
-                    "{}{}{}",
-                    self.ahead.start.to_owned(),
-                    extractor.ahead,
-                    self.ahead.end.to_owned()
-                ),
-            )
+        write!(out, "{}{}{}", self.branch.start, extractor.branch, self.branch.end)
             .expect("Error");
+        if !extractor.ahead.is_empty() {
+            write!(out, "{}{}{}", self.ahead.start, extractor.ahead, self.ahead.end)
+                .expect("Error");
         }
         if !extractor.behind.is_empty() {
-            write(
-                &mut branch_final,
-                format_args!(
-                    "{}{}{}",
-                    self.behind.start.to_owned(),
-                    extractor.behind,
-                    self.behind.end.to_owned()
-                ),
-            )
-            .expect("Error");
+            write!(out, "{}{}{}", self.behind.start, extractor.behind, self.behind.end)
+                .expect("Error");
         }
         if !unstaged_counts.is_empty() {
-            write(
-                &mut branch_final,
-                format_args!(
-                    "{}{}{}",
-                    self.unstaged.start.to_owned(),
-                    unstaged_counts.to_owned(),
-                    self.unstaged.end.to_owned()
-                ),
-            )
-            .expect("Error");
+            write!(out, "{}{}{}", self.unstaged.start, unstaged_counts, self.unstaged.end)
+                .expect("Error");
         }
         if !staged_counts.is_empty() {
-            write(
-                &mut branch_final,
-                format_args!(
-                    "{}{}{}",
-                    self.staged.start.to_owned(),
-                    staged_counts.to_owned(),
-                    self.staged.end.to_owned()
-                ),
-            )
-            .expect("Error");
+            write!(out, "{}{}{}", self.staged.start, staged_counts, self.staged.end)
+                .expect("Error");
         }
-        branch_final
+        out
     }
 }
 

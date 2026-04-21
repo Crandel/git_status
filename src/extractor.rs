@@ -1,5 +1,4 @@
 use regex::Regex;
-use std::string::String;
 
 #[derive(Debug)]
 pub struct Extractor {
@@ -16,12 +15,11 @@ pub struct Extractor {
 }
 
 impl Extractor {
-    // Account constructor
     pub fn new(status: &str) -> Extractor {
         let mut extractor = Extractor {
-            branch: String::from(""),
-            ahead: String::from(""),
-            behind: String::from(""),
+            branch: String::new(),
+            ahead: String::new(),
+            behind: String::new(),
             modified_unstaged: 0,
             deleted_unstaged: 0,
             untracked_unstaged: 0,
@@ -31,23 +29,19 @@ impl Extractor {
             new_staged: 0,
         };
 
-        let number = Regex::new("[0-9]+").unwrap();
-        let ahead_reg = Regex::new("ahead [0-9]+*").unwrap();
-        let behind = Regex::new("behind [0-9]+*").unwrap();
+        let number = Regex::new(r"\d+").unwrap();
+        let ahead_reg = Regex::new(r"ahead \d+").unwrap();
+        let behind_reg = Regex::new(r"behind \d+").unwrap();
 
         let vec_strings = status.split('\n').collect::<Vec<&str>>();
-        // First line give us a repo name and relation to remote server
-        let input = match vec_strings.get(0) {
-            Some(valid_str) => valid_str,
-            _ => "",
-        };
+        // First line gives branch name and relation to remote: ## branch...origin/branch [ahead N][behind N]
+        let input = vec_strings.first().copied().unwrap_or("");
 
-        // get ahead count
         let ahead = match ahead_reg.find(input) {
-            Some(ahead_str) => {
-                let ahead_str = &input[ahead_str.start()..ahead_str.end()];
-                match number.find(ahead_str) {
-                    Some(res) => &ahead_str[res.start()..res.end()],
+            Some(m) => {
+                let s = &input[m.start()..m.end()];
+                match number.find(s) {
+                    Some(r) => &s[r.start()..r.end()],
                     _ => "",
                 }
             }
@@ -55,12 +49,11 @@ impl Extractor {
         };
         extractor.ahead = String::from(ahead);
 
-        // get behind count
-        let behind = match behind.find(input) {
-            Some(behind_str) => {
-                let behind_str = &input[behind_str.start()..behind_str.end()];
-                match number.find(behind_str) {
-                    Some(res) => &behind_str[res.start()..res.end()],
+        let behind = match behind_reg.find(input) {
+            Some(m) => {
+                let s = &input[m.start()..m.end()];
+                match number.find(s) {
+                    Some(r) => &s[r.start()..r.end()],
                     _ => "",
                 }
             }
@@ -69,36 +62,30 @@ impl Extractor {
         extractor.behind = String::from(behind);
 
         // ## rrr-43...origin/rrr-43 [ahead 1][behind 3]
-        // we should ignore first 3 symbols and split by "..." to get the branch
-        let branch_vec = &input[3..input.len()].split("...").collect::<Vec<&str>>();
-        let branch = match branch_vec.get(0) {
-            Some(local_name) => local_name,
-            _ => "",
-        };
-        extractor.branch = String::from(branch);
+        // Skip "## " prefix, then split on "..." to isolate the local branch name
+        let branch_str = input.get(3..).unwrap_or("");
+        extractor.branch = branch_str
+            .split("...")
+            .next()
+            .unwrap_or("")
+            .to_string();
 
         for item in vec_strings.iter().skip(1) {
-            let current_str = item.chars().collect::<Vec<char>>();
-            if current_str.len() > 2 {
-                let staged_ch = current_str[0];
-                let unstaged_ch = current_str[1];
+            let mut chars = item.chars();
+            let staged_ch = chars.next();
+            let unstaged_ch = chars.next();
+            if item.len() > 2 {
                 match unstaged_ch {
-                    'M' => extractor.modified_unstaged += 1,
-                    'm' => extractor.modified_unstaged += 1,
-                    'D' => extractor.deleted_unstaged += 1,
-                    'd' => extractor.deleted_unstaged += 1,
-                    '?' => extractor.untracked_unstaged += 1,
+                    Some('M' | 'm') => extractor.modified_unstaged += 1,
+                    Some('D' | 'd') => extractor.deleted_unstaged += 1,
+                    Some('?') => extractor.untracked_unstaged += 1,
                     _ => (),
                 };
                 match staged_ch {
-                    'M' => extractor.modified_staged += 1,
-                    'm' => extractor.modified_staged += 1,
-                    'D' => extractor.deleted_staged += 1,
-                    'd' => extractor.deleted_staged += 1,
-                    'R' => extractor.renamed_staged += 1,
-                    'r' => extractor.renamed_staged += 1,
-                    'A' => extractor.new_staged += 1,
-                    'a' => extractor.new_staged += 1,
+                    Some('M' | 'm') => extractor.modified_staged += 1,
+                    Some('D' | 'd') => extractor.deleted_staged += 1,
+                    Some('R' | 'r') => extractor.renamed_staged += 1,
+                    Some('A' | 'a') => extractor.new_staged += 1,
                     _ => (),
                 };
             }
@@ -107,35 +94,33 @@ impl Extractor {
     }
 
     pub fn get_unstaged(&self, modified: &str, deleted: &str, untracked: &str) -> String {
-        let mut unstaged_counts = String::from("");
-
+        let mut out = String::new();
         if self.modified_unstaged > 0 {
-            unstaged_counts.push_str(&format!("{}{}", modified, self.modified_unstaged))
+            out.push_str(&format!("{}{}", modified, self.modified_unstaged))
         }
         if self.deleted_unstaged > 0 {
-            unstaged_counts.push_str(&format!("{}{}", deleted, self.deleted_unstaged))
+            out.push_str(&format!("{}{}", deleted, self.deleted_unstaged))
         }
         if self.untracked_unstaged > 0 {
-            unstaged_counts.push_str(&format!("{}{}", untracked, self.untracked_unstaged))
+            out.push_str(&format!("{}{}", untracked, self.untracked_unstaged))
         }
-        unstaged_counts
+        out
     }
 
     pub fn get_staged(&self, modified: &str, deleted: &str, renamed: &str, new: &str) -> String {
-        let mut staged_counts = String::from("");
-
+        let mut out = String::new();
         if self.modified_staged > 0 {
-            staged_counts.push_str(&format!("{}{}", modified, self.modified_staged))
+            out.push_str(&format!("{}{}", modified, self.modified_staged))
         }
         if self.deleted_staged > 0 {
-            staged_counts.push_str(&format!("{}{}", deleted, self.deleted_staged))
+            out.push_str(&format!("{}{}", deleted, self.deleted_staged))
         }
         if self.renamed_staged > 0 {
-            staged_counts.push_str(&format!("{}{}", renamed, self.renamed_staged))
+            out.push_str(&format!("{}{}", renamed, self.renamed_staged))
         }
         if self.new_staged > 0 {
-            staged_counts.push_str(&format!("{}{}", new, self.new_staged))
+            out.push_str(&format!("{}{}", new, self.new_staged))
         }
-        staged_counts
+        out
     }
 }
