@@ -1,0 +1,36 @@
+version: "3"
+
+tasks:
+  default:
+    deps: [build]
+    desc: Build all components
+
+  build:
+    desc: Builds the Rust CLI in release mode.
+    cmds:
+      - cargo build --release
+
+  install:
+    desc: Install binary into ~/.local/bin
+    cmds:
+      - cmd: echo "Installing ..."
+        silent: true
+      - task: build
+      - cmd: mv ./target/release/git_status ~/.local/bin
+
+  test:
+    desc: Runs unit and integration tests.
+    cmds:
+      - cargo test
+
+  run-bash:
+    desc: Runs the CLI tool for Bash prompt.
+    cmds:
+      - task: build
+      - ./target/release/git_status bash
+
+  run-zsh:
+    desc: Runs the CLI tool for Zsh prompt.
+    cmds:
+      - task: build
+      - ./target/release/git_status zsh
