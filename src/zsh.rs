@@ -1,4 +1,4 @@
-use crate::common::{OutputFormatter, ShellFormatter, Wrapper};
+use crate::common::{Chars, OutputFormatter, ShellFormatter, Wrapper};
 use crate::extractor::Extractor;
 
 pub struct ZshFormatter {
@@ -6,45 +6,44 @@ pub struct ZshFormatter {
 }
 
 impl ZshFormatter {
-    pub fn new() -> ZshFormatter {
+    pub fn new(chars: Chars) -> ZshFormatter {
+        let mut zsh_chars: Chars = chars;
+        zsh_chars.modified_char = "%%";
         let shell = ShellFormatter {
             branch: Wrapper {
-                start: String::from("%F{cyan}"),
+                start: String::from("%F{green}"),
                 end: String::from("%f"),
             },
             ahead: Wrapper {
-                start: String::from("%F{green}{>"),
+                start: String::from("%F{cyan}{>"),
                 end: String::from("}%f"),
             },
             behind: Wrapper {
                 start: String::from("%F{red}{<"),
                 end: String::from("}%f"),
             },
-            unstaged: Wrapper {
-                start: String::from("|%F{yellow}"),
+            unmerged: Wrapper {
+                // Magenta
+                start: String::from("%F{magenta}"),
                 end: String::from("%f"),
             },
             untracked: Wrapper {
-                start: String::from("|%F{red}"),
+                // Red
+                start: String::from("%F{red}"),
+                end: String::from("%f"),
+            },
+            unstaged: Wrapper {
+                // Bright yellow
+                start: String::from("%F{yellow}"),
                 end: String::from("%f"),
             },
             staged: Wrapper {
-                start: String::from("|%F{teal}"),
+                start: String::from("%F{teal}"),
                 end: String::from("%f"),
             },
-            modified_char: String::from("%%"),
-            deleted_char: String::from("-"),
-            untracked_char: String::from("*"),
-            renamed_char: String::from("^"),
-            new_char: String::from("+"),
+            chars: zsh_chars,
         };
         ZshFormatter { shell }
-    }
-}
-
-impl Default for ZshFormatter {
-    fn default() -> Self {
-        Self::new()
     }
 }
 

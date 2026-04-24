@@ -1,4 +1,4 @@
-use crate::common::{OutputFormatter, ShellFormatter, Wrapper};
+use crate::common::{Chars, OutputFormatter, ShellFormatter, Wrapper};
 use crate::extractor::Extractor;
 
 pub struct AnsiFormatter {
@@ -6,16 +6,16 @@ pub struct AnsiFormatter {
 }
 
 impl AnsiFormatter {
-    pub fn new() -> AnsiFormatter {
+    pub fn new(chars: Chars) -> AnsiFormatter {
         let shell = ShellFormatter {
             branch: Wrapper {
-                // Cyan (256-color)
-                start: String::from("\x1b[38;5;37m"),
+                // Bright green
+                start: String::from("\x1b[1;32m"),
                 end: String::from("\x1b[0m"),
             },
             ahead: Wrapper {
-                // Bright green
-                start: String::from("\x1b[1;32m{>"),
+                // Cyan (256-color)
+                start: String::from("\x1b[38;5;37m{>"),
                 end: String::from("}\x1b[0m"),
             },
             behind: Wrapper {
@@ -23,34 +23,29 @@ impl AnsiFormatter {
                 start: String::from("\x1b[1;31m{<"),
                 end: String::from("}\x1b[0m"),
             },
-            unstaged: Wrapper {
-                // Bright yellow
-                start: String::from("|\x1b[1;33m"),
+            unmerged: Wrapper {
+                // Magenta
+                start: String::from("\x1b[0;35m"),
                 end: String::from("\x1b[0m"),
             },
             untracked: Wrapper {
                 // Red
-                start: String::from("|\x1b[0;31m"),
+                start: String::from("\x1b[0;31m"),
+                end: String::from("\x1b[0m"),
+            },
+            unstaged: Wrapper {
+                // Bright yellow
+                start: String::from("\x1b[1;33m"),
                 end: String::from("\x1b[0m"),
             },
             staged: Wrapper {
                 // Teal (256-color)
-                start: String::from("|\x1b[38;5;66m"),
+                start: String::from("\x1b[38;5;66m"),
                 end: String::from("\x1b[0m"),
             },
-            modified_char: String::from("%"),
-            deleted_char: String::from("-"),
-            untracked_char: String::from("*"),
-            renamed_char: String::from("^"),
-            new_char: String::from("+"),
+            chars: chars,
         };
         AnsiFormatter { shell }
-    }
-}
-
-impl Default for AnsiFormatter {
-    fn default() -> Self {
-        Self::new()
     }
 }
 

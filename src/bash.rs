@@ -1,4 +1,4 @@
-use crate::common::{OutputFormatter, ShellFormatter, Wrapper};
+use crate::common::{Chars, OutputFormatter, ShellFormatter, Wrapper};
 use crate::extractor::Extractor;
 
 pub struct BashFormatter {
@@ -6,16 +6,16 @@ pub struct BashFormatter {
 }
 
 impl BashFormatter {
-    pub fn new() -> BashFormatter {
+    pub fn new(chars: Chars) -> BashFormatter {
         let shell = ShellFormatter {
             branch: Wrapper {
-                // Cyan (256-color)
-                start: String::from("\\[\\033[38;5;37m\\]"),
+                // Bright green
+                start: String::from("\\[\\033[1;32m\\]"),
                 end: String::from("\\[\\033[0m\\]"),
             },
             ahead: Wrapper {
-                // Bright green
-                start: String::from("\\[\\033[1;32m\\]{>"),
+                // Cyan (256-color)
+                start: String::from("\\[\\033[38;5;37m\\]{>"),
                 end: String::from("}\\[\\033[0m\\]"),
             },
             behind: Wrapper {
@@ -23,34 +23,29 @@ impl BashFormatter {
                 start: String::from("\\[\\033[1;31m\\]{<"),
                 end: String::from("}\\[\\033[0m\\]"),
             },
-            unstaged: Wrapper {
-                // Bright yellow
-                start: String::from("|\\[\\033[1;33m\\]"),
+            unmerged: Wrapper {
+                // Magenta
+                start: String::from("\\[\\033[0;35m\\]"),
                 end: String::from("\\[\\033[0m\\]"),
             },
             untracked: Wrapper {
                 // Red
-                start: String::from("|\\[\\033[0;31m\\]"),
+                start: String::from("\\[\\033[0;31m\\]"),
+                end: String::from("\\[\\033[0m\\]"),
+            },
+            unstaged: Wrapper {
+                // Bright yellow
+                start: String::from("\\[\\033[1;33m\\]"),
                 end: String::from("\\[\\033[0m\\]"),
             },
             staged: Wrapper {
                 // Teal (256-color)
-                start: String::from("|\\[\\033[38;5;66m\\]"),
+                start: String::from("\\[\\033[38;5;66m\\]"),
                 end: String::from("\\[\\033[0m\\]"),
             },
-            modified_char: String::from("%"),
-            deleted_char: String::from("-"),
-            untracked_char: String::from("*"),
-            renamed_char: String::from("^"),
-            new_char: String::from("+"),
+            chars: chars,
         };
         BashFormatter { shell }
-    }
-}
-
-impl Default for BashFormatter {
-    fn default() -> Self {
-        Self::new()
     }
 }
 

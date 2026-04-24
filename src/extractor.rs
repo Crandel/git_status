@@ -7,11 +7,15 @@ pub struct Extractor {
     pub behind: String,
     pub modified_unstaged: u16,
     pub deleted_unstaged: u16,
+    pub type_changed_unstaged: u16,
     pub untracked_unstaged: u16,
     pub modified_staged: u16,
     pub deleted_staged: u16,
     pub renamed_staged: u16,
     pub new_staged: u16,
+    pub type_changed_staged: u16,
+    pub copied_staged: u16,
+    pub unmerged: u16,
 }
 
 impl Extractor {
@@ -22,11 +26,15 @@ impl Extractor {
             behind: String::new(),
             modified_unstaged: 0,
             deleted_unstaged: 0,
+            type_changed_unstaged: 0,
             untracked_unstaged: 0,
             modified_staged: 0,
             deleted_staged: 0,
             renamed_staged: 0,
             new_staged: 0,
+            type_changed_staged: 0,
+            copied_staged: 0,
+            unmerged: 0,
         };
 
         let number = Regex::new(r"\d+").unwrap();
@@ -64,42 +72,53 @@ impl Extractor {
         // ## rrr-43...origin/rrr-43 [ahead 1][behind 3]
         // Skip "## " prefix, then split on "..." to isolate the local branch name
         let branch_str = input.get(3..).unwrap_or("");
-        extractor.branch = branch_str
-            .split("...")
-            .next()
-            .unwrap_or("")
-            .to_string();
+        extractor.branch = branch_str.split("...").next().unwrap_or("").to_string();
 
         for item in vec_strings.iter().skip(1) {
             let mut chars = item.chars();
             let staged_ch = chars.next();
             let unstaged_ch = chars.next();
             if item.len() > 2 {
-                match unstaged_ch {
-                    Some('M' | 'm') => extractor.modified_unstaged += 1,
-                    Some('D' | 'd') => extractor.deleted_unstaged += 1,
-                    Some('?') => extractor.untracked_unstaged += 1,
-                    _ => (),
-                };
-                match staged_ch {
-                    Some('M' | 'm') => extractor.modified_staged += 1,
-                    Some('D' | 'd') => extractor.deleted_staged += 1,
-                    Some('R' | 'r') => extractor.renamed_staged += 1,
-                    Some('A' | 'a') => extractor.new_staged += 1,
-                    _ => (),
-                };
+                // U in either column means conflict — count the file once
+                if staged_ch == Some('U')
+                    || staged_ch == Some('u')
+                    || unstaged_ch == Some('U')
+                    || unstaged_ch == Some('u')
+                {
+                    extractor.unmerged += 1;
+                } else {
+                    match unstaged_ch {
+                        Some('M' | 'm') => extractor.modified_unstaged += 1,
+                        Some('D' | 'd') => extractor.deleted_unstaged += 1,
+                        Some('T' | 't') => extractor.type_changed_unstaged += 1,
+                        Some('?') => extractor.untracked_unstaged += 1,
+                        _ => (),
+                    };
+                    match staged_ch {
+                        Some('M' | 'm') => extractor.modified_staged += 1,
+                        Some('D' | 'd') => extractor.deleted_staged += 1,
+                        Some('R' | 'r') => extractor.renamed_staged += 1,
+                        Some('A' | 'a') => extractor.new_staged += 1,
+                        Some('T' | 't') => extractor.type_changed_staged += 1,
+                        Some('C' | 'c') => extractor.copied_staged += 1,
+                        _ => (),
+                    };
+                }
             }
         }
         extractor
     }
 
-    pub fn get_unstaged(&self, modified: &str, deleted: &str) -> String {
+    pub fn get_unstaged(&self, modified: &str, deleted: &str, type_changed: &str) -> String {
         let mut out = String::new();
         if self.modified_unstaged > 0 {
             out.push_str(&format!("{}{}", modified, self.modified_unstaged))
         }
         if self.deleted_unstaged > 0 {
             out.push_str(&format!("{}{}", deleted, self.deleted_unstaged))
+        }
+        if self.type_changed_unstaged > 0 {
+            out.push_str(&format!("{}{}", type_changed, self.type_changed_unstaged))
         }
         out
     }
@@ -112,7 +131,15 @@ impl Extractor {
         }
     }
 
-    pub fn get_staged(&self, modified: &str, deleted: &str, renamed: &str, new: &str) -> String {
+    pub fn get_staged(
+        &self,
+        modified: &str,
+        deleted: &str,
+        renamed: &str,
+        new: &str,
+        type_changed: &str,
+        copied: &str,
+    ) -> String {
         let mut out = String::new();
         if self.modified_staged > 0 {
             out.push_str(&format!("{}{}", modified, self.modified_staged))
@@ -126,7 +153,21 @@ impl Extractor {
         if self.new_staged > 0 {
             out.push_str(&format!("{}{}", new, self.new_staged))
         }
+        if self.type_changed_staged > 0 {
+            out.push_str(&format!("{}{}", type_changed, self.type_changed_staged))
+        }
+        if self.copied_staged > 0 {
+            out.push_str(&format!("{}{}", copied, self.copied_staged))
+        }
         out
+    }
+
+    pub fn get_unmerged(&self, unmerged: &str) -> String {
+        if self.unmerged > 0 {
+            format!("{}{}", unmerged, self.unmerged)
+        } else {
+            String::new()
+        }
     }
 }
 
@@ -144,11 +185,15 @@ mod tests {
         assert_eq!(e.behind, "");
         assert_eq!(e.modified_unstaged, 0);
         assert_eq!(e.deleted_unstaged, 0);
+        assert_eq!(e.type_changed_unstaged, 0);
         assert_eq!(e.untracked_unstaged, 0);
         assert_eq!(e.modified_staged, 0);
         assert_eq!(e.deleted_staged, 0);
         assert_eq!(e.renamed_staged, 0);
         assert_eq!(e.new_staged, 0);
+        assert_eq!(e.type_changed_staged, 0);
+        assert_eq!(e.copied_staged, 0);
+        assert_eq!(e.unmerged, 0);
     }
 
     #[test]
@@ -223,6 +268,13 @@ mod tests {
     }
 
     #[test]
+    fn type_changed_unstaged() {
+        let e = Extractor::new("## main\n T file.txt\n");
+        assert_eq!(e.type_changed_unstaged, 1);
+        assert_eq!(e.type_changed_staged, 0);
+    }
+
+    #[test]
     fn untracked_file() {
         let e = Extractor::new("## main\n?? file.txt\n");
         assert_eq!(e.untracked_unstaged, 1);
@@ -254,6 +306,40 @@ mod tests {
     }
 
     #[test]
+    fn type_changed_staged() {
+        let e = Extractor::new("## main\nT  file.txt\n");
+        assert_eq!(e.type_changed_staged, 1);
+        assert_eq!(e.type_changed_unstaged, 0);
+    }
+
+    #[test]
+    fn copied_staged() {
+        let e = Extractor::new("## main\nC  src.txt\n");
+        assert_eq!(e.copied_staged, 1);
+    }
+
+    #[test]
+    fn unmerged_both_modified() {
+        // UU = both modified conflict — should count as 1 conflicted file, not 2
+        let e = Extractor::new("## main\nUU file.txt\n");
+        assert_eq!(e.unmerged, 1);
+        assert_eq!(e.modified_staged, 0);
+        assert_eq!(e.modified_unstaged, 0);
+    }
+
+    #[test]
+    fn unmerged_added_by_us() {
+        let e = Extractor::new("## main\nAU file.txt\n");
+        assert_eq!(e.unmerged, 1);
+    }
+
+    #[test]
+    fn unmerged_u_in_x_only() {
+        let e = Extractor::new("## main\nUD file.txt\n");
+        assert_eq!(e.unmerged, 1);
+    }
+
+    #[test]
     fn both_staged_and_unstaged() {
         let e = Extractor::new("## main\nMM file.txt\n");
         assert_eq!(e.modified_staged, 1);
@@ -262,7 +348,7 @@ mod tests {
 
     #[test]
     fn multiple_files_mixed() {
-        let status = "## main...origin/main [ahead 2]\n M f1\n D f2\nM  f3\nA  f4\n?? f5\nR  a -> b\n";
+        let status = "## main...origin/main [ahead 2]\n M f1\n D f2\nM  f3\nA  f4\n?? f5\nR  a -> b\nT  f6\nC  f7\nUU f8\n";
         let e = Extractor::new(status);
         assert_eq!(e.branch, "main");
         assert_eq!(e.ahead, "2");
@@ -272,6 +358,10 @@ mod tests {
         assert_eq!(e.modified_staged, 1);
         assert_eq!(e.new_staged, 1);
         assert_eq!(e.renamed_staged, 1);
+        assert_eq!(e.type_changed_staged, 1);
+        assert_eq!(e.type_changed_unstaged, 0);
+        assert_eq!(e.copied_staged, 1);
+        assert_eq!(e.unmerged, 1);
     }
 
     // --- get_unstaged() ---
@@ -279,25 +369,31 @@ mod tests {
     #[test]
     fn get_unstaged_empty() {
         let e = Extractor::new("## main\n");
-        assert_eq!(e.get_unstaged("%", "-"), "");
+        assert_eq!(e.get_unstaged("%", "-", "~"), "");
     }
 
     #[test]
     fn get_unstaged_modified_only() {
         let e = Extractor::new("## main\n M a\n M b\n");
-        assert_eq!(e.get_unstaged("%", "-"), "%2");
+        assert_eq!(e.get_unstaged("%", "-", "~"), "%2");
     }
 
     #[test]
     fn get_unstaged_deleted_only() {
         let e = Extractor::new("## main\n D a\n");
-        assert_eq!(e.get_unstaged("%", "-"), "-1");
+        assert_eq!(e.get_unstaged("%", "-", "~"), "-1");
     }
 
     #[test]
     fn get_unstaged_modified_and_deleted() {
         let e = Extractor::new("## main\n M a\n D b\n");
-        assert_eq!(e.get_unstaged("%", "-"), "%1-1");
+        assert_eq!(e.get_unstaged("%", "-", "~"), "%1-1");
+    }
+
+    #[test]
+    fn get_unstaged_includes_type_changed() {
+        let e = Extractor::new("## main\n T a\n");
+        assert_eq!(e.get_unstaged("%", "-", "~"), "~1");
     }
 
     // --- get_untracked() ---
@@ -319,18 +415,38 @@ mod tests {
     #[test]
     fn get_staged_empty() {
         let e = Extractor::new("## main\n");
-        assert_eq!(e.get_staged("%", "-", "^", "+"), "");
+        assert_eq!(e.get_staged("%", "-", "^", "+", "~", "="), "");
     }
 
     #[test]
     fn get_staged_all_types() {
-        let e = Extractor::new("## main\nM  a\nD  b\nR  c -> d\nA  e\n");
-        assert_eq!(e.get_staged("%", "-", "^", "+"), "%1-1^1+1");
+        let e = Extractor::new("## main\nM  a\nD  b\nR  c -> d\nA  e\nT  f\nC  g\n");
+        assert_eq!(e.get_staged("%", "-", "^", "+", "~", "="), "%1-1^1+1~1=1");
     }
 
     #[test]
     fn get_staged_new_only() {
         let e = Extractor::new("## main\nA  file.txt\n");
-        assert_eq!(e.get_staged("%", "-", "^", "+"), "+1");
+        assert_eq!(e.get_staged("%", "-", "^", "+", "~", "="), "+1");
+    }
+
+    #[test]
+    fn get_staged_includes_copied() {
+        let e = Extractor::new("## main\nC  file.txt\n");
+        assert_eq!(e.get_staged("%", "-", "^", "+", "~", "="), "=1");
+    }
+
+    // --- get_unmerged() ---
+
+    #[test]
+    fn get_unmerged_empty() {
+        let e = Extractor::new("## main\n");
+        assert_eq!(e.get_unmerged("!"), "");
+    }
+
+    #[test]
+    fn get_unmerged_some() {
+        let e = Extractor::new("## main\nUU f1\nUU f2\n");
+        assert_eq!(e.get_unmerged("!"), "!2");
     }
 }

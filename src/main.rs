@@ -4,7 +4,7 @@ use std::str;
 
 use git_status::ansi::AnsiFormatter;
 use git_status::bash::BashFormatter;
-use git_status::common::OutputFormatter;
+use git_status::common::{Chars, OutputFormatter};
 use git_status::extractor::Extractor;
 use git_status::zsh::ZshFormatter;
 
@@ -17,16 +17,21 @@ fn main() {
     };
     let status_vec = Command::new("git")
         .arg("status")
-        .arg("-sb")
+        .arg("-b")
+        .arg("--porcelain")
         .output()
         .expect("Failed to execute process, git missing");
     /*
     git status -sb return all changes in repository
 
       ## rrr-43...origin/rrr-43 [ahead 1][behind 3]
-      ?? <file 1> - new file
-       M <file 2> - modified file
-      D  <file 2> - deleted file
+      A  <file> - new staged file
+      M <file> - modified file
+      D <file> - deleted file
+      R <file> - renamed file
+      T <file> - file type changed
+      U <file> - updated but unmerged
+      ?? <file> - new file
 
     Using this output we could calculate changes and create repository status output for shell.
     */
@@ -35,10 +40,11 @@ fn main() {
         return;
     }
     let extractor = Extractor::new(status);
+    let chars = Chars::new();
     let branch_final = match shell {
-        "bash" => BashFormatter::new().get_output(&extractor),
-        "zsh" => ZshFormatter::new().get_output(&extractor),
-        "ansi" => AnsiFormatter::new().get_output(&extractor),
+        "bash" => BashFormatter::new(chars).get_output(&extractor),
+        "zsh" => ZshFormatter::new(chars).get_output(&extractor),
+        "ansi" => AnsiFormatter::new(chars).get_output(&extractor),
         _ => String::from(""),
     };
     println!("{}", branch_final);
