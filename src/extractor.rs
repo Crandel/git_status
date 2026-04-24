@@ -129,3 +129,208 @@ impl Extractor {
         out
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // --- Extractor::new() branch parsing ---
+
+    #[test]
+    fn clean_repo_no_remote() {
+        let e = Extractor::new("## main\n");
+        assert_eq!(e.branch, "main");
+        assert_eq!(e.ahead, "");
+        assert_eq!(e.behind, "");
+        assert_eq!(e.modified_unstaged, 0);
+        assert_eq!(e.deleted_unstaged, 0);
+        assert_eq!(e.untracked_unstaged, 0);
+        assert_eq!(e.modified_staged, 0);
+        assert_eq!(e.deleted_staged, 0);
+        assert_eq!(e.renamed_staged, 0);
+        assert_eq!(e.new_staged, 0);
+    }
+
+    #[test]
+    fn tracking_branch_strips_remote() {
+        let e = Extractor::new("## main...origin/main\n");
+        assert_eq!(e.branch, "main");
+    }
+
+    #[test]
+    fn ahead_only() {
+        let e = Extractor::new("## main...origin/main [ahead 3]\n");
+        assert_eq!(e.ahead, "3");
+        assert_eq!(e.behind, "");
+    }
+
+    #[test]
+    fn behind_only() {
+        let e = Extractor::new("## main...origin/main [behind 5]\n");
+        assert_eq!(e.ahead, "");
+        assert_eq!(e.behind, "5");
+    }
+
+    #[test]
+    fn ahead_and_behind() {
+        let e = Extractor::new("## dev...origin/dev [ahead 1][behind 3]\n");
+        assert_eq!(e.branch, "dev");
+        assert_eq!(e.ahead, "1");
+        assert_eq!(e.behind, "3");
+    }
+
+    #[test]
+    fn branch_no_dots() {
+        let e = Extractor::new("## feature-branch\n");
+        assert_eq!(e.branch, "feature-branch");
+    }
+
+    #[test]
+    fn detached_head() {
+        let e = Extractor::new("## HEAD (no branch)\n");
+        assert_eq!(e.branch, "HEAD (no branch)");
+    }
+
+    #[test]
+    fn empty_input() {
+        let e = Extractor::new("");
+        assert_eq!(e.branch, "");
+        assert_eq!(e.ahead, "");
+        assert_eq!(e.behind, "");
+        assert_eq!(e.modified_unstaged, 0);
+    }
+
+    #[test]
+    fn short_first_line_no_panic() {
+        let e = Extractor::new("##\n");
+        assert_eq!(e.branch, "");
+    }
+
+    // --- Extractor::new() file status parsing ---
+
+    #[test]
+    fn modified_unstaged() {
+        let e = Extractor::new("## main\n M file.txt\n");
+        assert_eq!(e.modified_unstaged, 1);
+        assert_eq!(e.modified_staged, 0);
+    }
+
+    #[test]
+    fn deleted_unstaged() {
+        let e = Extractor::new("## main\n D file.txt\n");
+        assert_eq!(e.deleted_unstaged, 1);
+        assert_eq!(e.deleted_staged, 0);
+    }
+
+    #[test]
+    fn untracked_file() {
+        let e = Extractor::new("## main\n?? file.txt\n");
+        assert_eq!(e.untracked_unstaged, 1);
+    }
+
+    #[test]
+    fn modified_staged() {
+        let e = Extractor::new("## main\nM  file.txt\n");
+        assert_eq!(e.modified_staged, 1);
+        assert_eq!(e.modified_unstaged, 0);
+    }
+
+    #[test]
+    fn deleted_staged() {
+        let e = Extractor::new("## main\nD  file.txt\n");
+        assert_eq!(e.deleted_staged, 1);
+    }
+
+    #[test]
+    fn renamed_staged() {
+        let e = Extractor::new("## main\nR  old.txt -> new.txt\n");
+        assert_eq!(e.renamed_staged, 1);
+    }
+
+    #[test]
+    fn new_file_staged() {
+        let e = Extractor::new("## main\nA  file.txt\n");
+        assert_eq!(e.new_staged, 1);
+    }
+
+    #[test]
+    fn both_staged_and_unstaged() {
+        let e = Extractor::new("## main\nMM file.txt\n");
+        assert_eq!(e.modified_staged, 1);
+        assert_eq!(e.modified_unstaged, 1);
+    }
+
+    #[test]
+    fn multiple_files_mixed() {
+        let status = "## main...origin/main [ahead 2]\n M f1\n D f2\nM  f3\nA  f4\n?? f5\nR  a -> b\n";
+        let e = Extractor::new(status);
+        assert_eq!(e.branch, "main");
+        assert_eq!(e.ahead, "2");
+        assert_eq!(e.modified_unstaged, 1);
+        assert_eq!(e.deleted_unstaged, 1);
+        assert_eq!(e.untracked_unstaged, 1);
+        assert_eq!(e.modified_staged, 1);
+        assert_eq!(e.new_staged, 1);
+        assert_eq!(e.renamed_staged, 1);
+    }
+
+    // --- get_unstaged() ---
+
+    #[test]
+    fn get_unstaged_empty() {
+        let e = Extractor::new("## main\n");
+        assert_eq!(e.get_unstaged("%", "-"), "");
+    }
+
+    #[test]
+    fn get_unstaged_modified_only() {
+        let e = Extractor::new("## main\n M a\n M b\n");
+        assert_eq!(e.get_unstaged("%", "-"), "%2");
+    }
+
+    #[test]
+    fn get_unstaged_deleted_only() {
+        let e = Extractor::new("## main\n D a\n");
+        assert_eq!(e.get_unstaged("%", "-"), "-1");
+    }
+
+    #[test]
+    fn get_unstaged_modified_and_deleted() {
+        let e = Extractor::new("## main\n M a\n D b\n");
+        assert_eq!(e.get_unstaged("%", "-"), "%1-1");
+    }
+
+    // --- get_untracked() ---
+
+    #[test]
+    fn get_untracked_empty() {
+        let e = Extractor::new("## main\n");
+        assert_eq!(e.get_untracked("*"), "");
+    }
+
+    #[test]
+    fn get_untracked_some() {
+        let e = Extractor::new("## main\n?? a\n?? b\n?? c\n");
+        assert_eq!(e.get_untracked("*"), "*3");
+    }
+
+    // --- get_staged() ---
+
+    #[test]
+    fn get_staged_empty() {
+        let e = Extractor::new("## main\n");
+        assert_eq!(e.get_staged("%", "-", "^", "+"), "");
+    }
+
+    #[test]
+    fn get_staged_all_types() {
+        let e = Extractor::new("## main\nM  a\nD  b\nR  c -> d\nA  e\n");
+        assert_eq!(e.get_staged("%", "-", "^", "+"), "%1-1^1+1");
+    }
+
+    #[test]
+    fn get_staged_new_only() {
+        let e = Extractor::new("## main\nA  file.txt\n");
+        assert_eq!(e.get_staged("%", "-", "^", "+"), "+1");
+    }
+}
