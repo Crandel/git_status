@@ -46,12 +46,12 @@ impl ShellFormatter {
             write!(out, "{}{}{}", self.behind.start, extractor.behind, self.behind.end)
                 .expect("Error");
         }
-        if !unstaged_counts.is_empty() {
-            write!(out, "{}{}{}", self.unstaged.start, unstaged_counts, self.unstaged.end)
-                .expect("Error");
-        }
         if !untracked_counts.is_empty() {
             write!(out, "{}{}{}", self.untracked.start, untracked_counts, self.untracked.end)
+                .expect("Error");
+        }
+        if !unstaged_counts.is_empty() {
+            write!(out, "{}{}{}", self.unstaged.start, unstaged_counts, self.unstaged.end)
                 .expect("Error");
         }
         if !staged_counts.is_empty() {
@@ -143,8 +143,8 @@ mod tests {
         let pos_untrack  = out.find("|\x1b[0;31m").unwrap();
         let pos_staged   = out.find("|\x1b[38;5;66m").unwrap();
         assert!(pos_ahead < pos_behind);
-        assert!(pos_behind < pos_unstaged);
-        assert!(pos_unstaged < pos_untrack);
+        assert!(pos_behind < pos_untrack);
+        assert!(pos_untrack < pos_unstaged);
         assert!(pos_untrack < pos_staged);
     }
 }
