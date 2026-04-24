@@ -12,6 +12,7 @@ pub struct ShellFormatter {
     pub ahead: Wrapper,
     pub behind: Wrapper,
     pub unstaged: Wrapper,
+    pub untracked: Wrapper,
     pub staged: Wrapper,
     pub modified_char: String,
     pub deleted_char: String,
@@ -26,8 +27,8 @@ impl ShellFormatter {
         let unstaged_counts = extractor.get_unstaged(
             &self.modified_char,
             &self.deleted_char,
-            &self.untracked_char,
         );
+        let untracked_counts = extractor.get_untracked(&self.untracked_char);
         let staged_counts = extractor.get_staged(
             &self.modified_char,
             &self.deleted_char,
@@ -47,6 +48,10 @@ impl ShellFormatter {
         }
         if !unstaged_counts.is_empty() {
             write!(out, "{}{}{}", self.unstaged.start, unstaged_counts, self.unstaged.end)
+                .expect("Error");
+        }
+        if !untracked_counts.is_empty() {
+            write!(out, "{}{}{}", self.untracked.start, untracked_counts, self.untracked.end)
                 .expect("Error");
         }
         if !staged_counts.is_empty() {

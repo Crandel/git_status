@@ -28,6 +28,11 @@ impl AnsiFormatter {
                 start: String::from("|\x1b[1;33m"),
                 end: String::from("\x1b[0m"),
             },
+            untracked: Wrapper {
+                // Red
+                start: String::from("|\x1b[0;31m"),
+                end: String::from("\x1b[0m"),
+            },
             staged: Wrapper {
                 // Teal (256-color)
                 start: String::from("|\x1b[38;5;66m"),

@@ -28,6 +28,11 @@ impl BashFormatter {
                 start: String::from("|\\[\\033[1;33m\\]"),
                 end: String::from("\\[\\033[0m\\]"),
             },
+            untracked: Wrapper {
+                // Red
+                start: String::from("|\\[\\033[0;31m\\]"),
+                end: String::from("\\[\\033[0m\\]"),
+            },
             staged: Wrapper {
                 // Teal (256-color)
                 start: String::from("|\\[\\033[38;5;66m\\]"),

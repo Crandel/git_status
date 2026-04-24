@@ -93,7 +93,7 @@ impl Extractor {
         extractor
     }
 
-    pub fn get_unstaged(&self, modified: &str, deleted: &str, untracked: &str) -> String {
+    pub fn get_unstaged(&self, modified: &str, deleted: &str) -> String {
         let mut out = String::new();
         if self.modified_unstaged > 0 {
             out.push_str(&format!("{}{}", modified, self.modified_unstaged))
@@ -101,10 +101,15 @@ impl Extractor {
         if self.deleted_unstaged > 0 {
             out.push_str(&format!("{}{}", deleted, self.deleted_unstaged))
         }
-        if self.untracked_unstaged > 0 {
-            out.push_str(&format!("{}{}", untracked, self.untracked_unstaged))
-        }
         out
+    }
+
+    pub fn get_untracked(&self, untracked: &str) -> String {
+        if self.untracked_unstaged > 0 {
+            format!("{}{}", untracked, self.untracked_unstaged)
+        } else {
+            String::new()
+        }
     }
 
     pub fn get_staged(&self, modified: &str, deleted: &str, renamed: &str, new: &str) -> String {

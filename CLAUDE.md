@@ -4,21 +4,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
+Prefer `task` (go-task) over raw `cargo` commands:
+
 ```bash
-# Build
-cargo build
-cargo build --release
+task           # build release (default)
+task build     # cargo build --release
+task install   # build and install to ~/.local/bin
+task test      # cargo test
+task run-bash  # build + run for bash prompt
+task run-zsh   # build + run for zsh prompt
+```
 
-# Run (requires shell argument)
-./target/release/git_status bash
-./target/release/git_status zsh
+Raw cargo commands when needed:
 
-# Check and lint
+```bash
 cargo check
 cargo clippy
-
-# Test
-cargo test
+cargo build --release
+./target/release/git_status ansi   # ansi is the default when no arg given
 ```
 
 ## Architecture
@@ -30,8 +33,8 @@ This is a CLI tool that runs `git status -sb`, parses its output, and emits a sh
 **Key design:**
 - `extractor.rs` — parses `git status -sb` output into structured counts (ahead/behind commits, staged/unstaged file changes by type). The first line gives branch + remote tracking; subsequent lines give per-file status using two-character codes (column 0 = staged, column 1 = unstaged).
 - `common.rs` — `ShellFormatter` holds shell-escape wrappers (start/end strings for color codes) and character symbols per change type. `OutputFormatter` trait is the interface both formatters implement.
-- `bash.rs` / `zsh.rs` — each constructs a `ShellFormatter` with shell-specific ANSI/prompt escape sequences and delegates to `format_output()`.
+- `bash.rs` / `zsh.rs` / `ansi.rs` — each constructs a `ShellFormatter` with shell-specific escape sequences and delegates to `format_output()`. `ansi` uses raw `\x1b[…m` bytes (for status bars / non-PS1 contexts); `bash` wraps codes in `\[…\]`; `zsh` uses `%F{…}%f`.
 
 **Adding a new shell:** implement `OutputFormatter` and construct a `ShellFormatter` with the appropriate escape sequences for that shell.
 
-**Output format:** `<branch>[ahead/behind][|unstaged][|staged]` — sections are omitted when empty.
+**Output format:** `<branch>[ahead/behind][|unstaged][|untracked][|staged]` — sections are omitted when empty. Default shell argument is `ansi`.
